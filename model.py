@@ -5,6 +5,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+__all__ = ['MobileNetV3', 'mobilenet_v3']
+
 
 
 def _make_divisible(v: Union[int, float], divisor: int = 8) -> int:
@@ -195,7 +197,7 @@ class MobileNetV3(nn.Module):
         return x
 
 
-def mobilenet_v2(pretrained=False, progress=True, **kwargs):
+def mobilenet_v3(pretrained=False, progress=True, **kwargs):
     model = MobileNetV3(**kwargs)
     if pretrained:
         raise NotImplementedError("No pretrained model available")
