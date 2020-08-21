@@ -205,6 +205,6 @@ def mobilenet_v3(pretrained=False, progress=True, **kwargs):
 
 
 if __name__ == "__main__":
-    model = mobilenet_v2(architecture="large", num_classes=1000, width_mult=1)
+    model = mobilenet_v3(architecture="large", num_classes=1000, width_mult=1)
     print(model)
     print("Param:", sum(p.numel() for p in model.parameters()))
