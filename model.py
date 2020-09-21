@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 __all__ = ['MobileNetV3', 'mobilenet_v3']
-
+_BN_MOMENTUM = 1 - 0.99
 
 
 def _make_divisible(v: Union[int, float], divisor: int = 8) -> int:
@@ -21,18 +21,26 @@ class ConvBN(nn.Module):
             out_c: int,
             k_size: int,
             stride: int = 1,
+            dilation: int = 1,
             groups: int = 1,
             activation : Optional[nn.Module] = None,
             squeeze_excite: bool = False
     ):
         super().__init__()
-        self.padding = (k_size - 1) // 2        # same padding
+        self.in_c = in_c
+        self.out_c = out_c
+        self.k_size = k_size
+        self.stride = stride
+        self.dilation = dilation
+        self.groups = groups
+        self.activation = activation
+        self.padding = int((k_size - 1) * dilation / 2)       # same padding
         self.squeeze_excite = squeeze_excite
 
         self.conv_bn = nn.Sequential(
             nn.Conv2d(in_c, out_c, k_size, stride, self.padding,
-                      groups=groups, bias=False),
-            nn.BatchNorm2d(out_c)
+                      dilation=dilation, groups=groups, bias=False),
+            nn.BatchNorm2d(out_c, momentum=_BN_MOMENTUM)
         )
         if activation:
             self.conv_bn.add_module("2", activation)
@@ -74,16 +82,24 @@ class InvertedResidual(nn.Module):
         k_size: int,
         stride: int,
         activation: nn.Module,
-        squeeze_excite: bool = False
+        squeeze_excite: bool = False,
+        dilation: int = 1,
     ):
         super().__init__()
+        self.in_c = in_c
+        self.exp_c = exp_c
+        self.out_c = out_c
+        self.k_size = k_size
+        self.stride = stride
+        self.dilation = dilation
+        self.activation = activation
         self.residual = (stride == 1 or stride == (1, 1)) and (in_c == out_c)
         self.squeeze_excite = squeeze_excite
 
         self.block = nn.Sequential(
             ConvBN(in_c, exp_c, 1, activation=activation),
             ConvBN(exp_c, exp_c, k_size, stride,
-                   groups=exp_c,
+                   dilation=dilation, groups=exp_c,
                    activation=activation,
                    squeeze_excite=squeeze_excite),
             ConvBN(exp_c, out_c, 1)
@@ -102,7 +118,8 @@ class MobileNetV3(nn.Module):
         self,
         num_classes: int = 1000,
         width_mult: Union[int, float] = 1.0,
-        architecture: str = "small"
+        architecture: str = "small",
+        dropout: int = 0.8
     ):
         super().__init__()
 
@@ -180,7 +197,7 @@ class MobileNetV3(nn.Module):
                 nn.Hardswish(),
             ])
             classifier = nn.Sequential(
-                nn.Dropout(p=.8),
+                nn.Dropout(p=dropout),
                 nn.Conv2d(out_c, num_classes, 1, 1)
             )
 
@@ -205,6 +222,6 @@ def mobilenet_v3(pretrained=False, progress=True, **kwargs):
 
 
 if __name__ == "__main__":
-    model = mobilenet_v3(architecture="large", num_classes=1000, width_mult=1)
+    model = mobilenet_v3(architecture="large", num_classes=1000, width_mult=1.0)
     print(model)
     print("Param:", sum(p.numel() for p in model.parameters()))
