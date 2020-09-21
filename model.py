@@ -214,21 +214,15 @@ class MobileNetV3(nn.Module):
         return x
 
 
-def mobilenet_v3(pretrained=False, progress=True,
-                 segmentation=False, **kwargs):
-    if segmentation:
-        from model_segmentation import MobileNetV3Segmentation
-        model = MobileNetV3Segmentation(**kwargs)
-        if pretrained:
-            raise NotImplementedError("No pretrained model available")
-    else:
-        model = MobileNetV3(**kwargs)
-        if pretrained:
-            raise NotImplementedError("No pretrained model available")
+def mobilenet_v3(pretrained=False, **kwargs):
+    model = MobileNetV3(**kwargs)
+    if pretrained:
+        raise NotImplementedError("No pretrained model available")
     return model
 
 
 if __name__ == "__main__":
-    model = mobilenet_v3(segmentation=False, architecture="large", num_classes=1000, width_mult=1.0)
+    model = mobilenet_v3(architecture="large",
+                         num_classes=1000, width_mult=1.0)
     print(model)
     print("Param:", sum(p.numel() for p in model.parameters()))

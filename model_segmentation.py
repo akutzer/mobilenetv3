@@ -202,10 +202,16 @@ class MobileNetV3Segmentation(nn.Module):
         return new_inv_residual
 
 
+def mobilenet_v3_segmentation(pretrained=False, **kwargs):
+    model = MobileNetV3Segmentation(**kwargs)
+    if pretrained:
+        raise NotImplementedError("No pretrained model available")
+    return model
+
+
 if __name__ == "__main__":
-    model = MobileNetV3Segmentation(out_c=20, architecture="small",
-                                                head="aspp",
-                                                shallow_stride=8, deep_stride=16,
-                                                head_c=128, width_mult=1.0)
+    model = mobilenet_v3_segmentation(architecture="small", head="aspp",
+                         shallow_stride=8, deep_stride=16,
+                         out_c=20, head_c=128, width_mult=1.0)
     print(model)
     print("Param:", sum(p.numel() for p in model.parameters()))
