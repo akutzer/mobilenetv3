@@ -43,7 +43,7 @@ class LR_ASPP(nn.Module):
         return segmentation_x
 
 
-class R_ASPP(nn.Module):
+class ASPP(nn.Module):
 
     def __init__(self, shallow_in_c: int, deep_in_c: int, out_c: int,
                  hidden_c: int = 32, dilations: list = [1, 3, 5]):
@@ -107,8 +107,8 @@ class MobileNetV3Segmentation(nn.Module):
             "Shallow stride should be smaller than deep stride"
 
         head = head.lower()
-        assert head in ["lr_aspp", "r_aspp"], \
-            "Head must be LR_ASPP or R_ASPP!"
+        assert head in ["lr_aspp", "aspp"], \
+            "Head must be LR_ASPP or ASPP!"
 
         self.backbone, self.segm_head = self._prepare_model(
             architecture, head, shallow_stride, deep_stride, width_mult)
@@ -169,8 +169,8 @@ class MobileNetV3Segmentation(nn.Module):
             backbone[-1] = self._reduce_last_block_by_factor(backbone[-1], 2, 2)
             head = LR_ASPP(shallow_channels, deep_channels // 2,
                            self.out_c, self.head_c)
-        if head == "r_aspp":
-            head = R_ASPP(shallow_channels, deep_channels,
+        if head == "aspp":
+            head = ASPP(shallow_channels, deep_channels,
                            self.out_c, self.head_c)
 
         return nn.Sequential(*backbone), head
@@ -211,7 +211,7 @@ def mobilenet_v3_segmentation(pretrained=False, progress=True, **kwargs):
 
 if __name__ == "__main__":
     model = mobilenet_v3_segmentation(out_c=20, architecture="small",
-                                                head="lr_aspp",
+                                                head="aspp",
                                                 shallow_stride=8, deep_stride=16,
                                                 head_c=128, width_mult=1.0)
     print(model)
